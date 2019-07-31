@@ -25,14 +25,14 @@ class FeedbackFC(Layer):
             self.B = tf.cast(tf.Variable(weight_dict[self.name]), tf.float32)
         elif std is not None:
             b = np.random.normal(loc=0., scale=std, size=(self.num_classes, self.output_size))
-            self.B = tf.cast(tf.Variable(b), tf.float32)
+            self.B = tf.Variable(b, dtype=tf.float32)
         else:
             # var = 1. / self.output_size
             # std = np.sqrt(var)
             # b = np.random.normal(loc=0., scale=std, size=(self.num_classes, self.output_size))
 
             b = FeedbackMatrix(size=(self.num_classes, self.output_size), sparse=self.sparse, rank=self.rank)
-            self.B = tf.cast(tf.Variable(b), tf.float32) 
+            self.B = tf.Variable(b, dtype=tf.float32) 
 
     def get_weights(self):
         return [(self.name, self.B)]

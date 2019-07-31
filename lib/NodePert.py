@@ -4,42 +4,36 @@ import numpy as np
 import math
 
 from lib.Layer import Layer 
-from lib.Activation import Activation
-from lib.Activation import Sigmoid
-from lib.FeedbackMatrix import FeedbackMatrix
+#from lib.Activation import Activation
+#from lib.Activation import Sigmoid
 
-class FeedbackConv(Layer):
+class NodePert(Layer):
 
-    def __init__(self, size : tuple, num_classes : int, sparse : int, rank : int, name=None, load=None):
+    def __init__(self, size : tuple, sigma = 0., name=None):
         self.size = size
-        self.num_classes = num_classes
-        self.sparse = sparse
-        self.rank = rank
-        self.batch_size, self.h, self.w, self.f = self.size
+        #self.batch_size, self.h, self.w, self.f = self.size
         self.name = name
-        self.num_output = self.h * self.w * self.f
-        self.output_size = self.num_output
-
-        if load:
-            weight_dict = np.load(load).item()
-            self.B = tf.Variable(weight_dict[self.name], dtype=tf.float32)
-        else:
-            b = FeedbackMatrix(size=(self.num_classes, self.num_output), sparse=self.sparse, rank=self.rank)
-            self.B = tf.Variable(b, dtype=tf.float32) 
+        self.sigma = sigma
+        self.num_output = np.prod(self.size[1:])
+        #Add noise!
+        self.xi = tf.random.normal(shape=self.size, mean=0.0, stddev=self.sigma, dtype=tf.float32)
 
     ###################################################################
     
     def get_weights(self):
-        return [(self.name, self.B)]
+        return []
     
     def get_feedback(self):
-        return self.B
+        return []
+
+    def get_noise(self):
+        return self.xi
 
     def num_params(self):
         return 0
         
     def forward(self, X):
-        return X
+        return X + self.xi
                 
     ###################################################################           
         
@@ -55,10 +49,7 @@ class FeedbackConv(Layer):
     ###################################################################
 
     def dfa_backward(self, AI, AO, E, DO):
-        E = tf.matmul(E, self.B)
-        E = tf.reshape(E, self.size)
-        E = tf.multiply(E, DO)
-        return E
+        return DO
         
     def dfa_gv(self, AI, AO, E, DO):
         return []
