@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.5)
     parser.add_argument('--act', type=str, default='tanh')
     parser.add_argument('--bias', type=float, default=0.1)
-    parser.add_argument('--gpu', type=int, default=1)
+    parser.add_argument('--gpu', type=int, default=2)
     parser.add_argument('--dfa', type=int, default=1)
     parser.add_argument('--sparse', type=int, default=0)
     parser.add_argument('--rank', type=int, default=0)
@@ -99,14 +99,14 @@ def main():
     weights_conv=args.load
     
     #Setup the parameters
-    attrs = ['sigma', 'alpha', 'beta']
-    log_scale = [True, True, True]
-    ranges = [[-4, -1], [-6,-3], [-6, -3]]
+    attrs = ['sigma', 'beta']
+    log_scale = [True, True]
+    ranges = [[-4, -1], [-5, -2]]
     params = []
     isnan = []
     train_accs = []
     test_accs = []
-    
+
     #Here we run a bunch of times for different parameters...
     for idx in range(args.N):
     
@@ -241,7 +241,7 @@ def main():
         f.close()
         
         ##############################################
-        
+                
         for ii in range(EPOCHS):
             if args.opt == 'decay' or args.opt == 'gd':
                 decay = np.power(args.decay, ii)
@@ -306,7 +306,7 @@ def main():
             f.close()
             
         #Save params after each run
-        fn = "./cifar10_conv_np_hyperparam_search_varalpha.npz"
+        fn = "./cifar10_conv_np_higherbeta_hyperparam_search.npz"
         to_save = {
             'attr': attrs,
             'params': params,

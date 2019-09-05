@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.5)
     parser.add_argument('--act', type=str, default='tanh')
     parser.add_argument('--bias', type=float, default=0.1)
-    parser.add_argument('--gpu', type=int, default=1)
+    parser.add_argument('--gpu', type=int, default=2)
     parser.add_argument('--dfa', type=int, default=1)
     parser.add_argument('--sparse', type=int, default=0)
     parser.add_argument('--rank', type=int, default=0)
@@ -104,6 +104,8 @@ def main():
     ranges = [[-4, -1], [-6, -3]]
     params = []
     isnan = []
+    train_accs = []
+    test_accs = []
 
     #Here we run a bunch of times for different parameters...
     for idx in range(args.N):
@@ -239,10 +241,7 @@ def main():
         f.close()
         
         ##############################################
-        
-        train_accs = []
-        test_accs = []
-        
+                
         for ii in range(EPOCHS):
             if args.opt == 'decay' or args.opt == 'gd':
                 decay = np.power(args.decay, ii)
