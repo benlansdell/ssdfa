@@ -63,7 +63,7 @@ def main():
     parser.add_argument('--rank', type=int, default=0)
     parser.add_argument('--init', type=str, default="sqrt_fan_in")
     parser.add_argument('--opt', type=str, default="adam")
-    parser.add_argument('--N', type=int, default=30)
+    parser.add_argument('--N', type=int, default=50)
     parser.add_argument('--save', type=int, default=0)
     parser.add_argument('--name', type=str, default="cifar10_conv_np")
     parser.add_argument('--load', type=str, default=None)
@@ -307,7 +307,7 @@ def main():
             f.close()
             
         #Save params after each run
-        fn = "./cifar10_conv_np_relu_hyperparam_search.npz"
+        fn = "./cifar10_conv_np_relu_hyperparam_septsearch_dfa_%d.npz"%args.dfa
         to_save = {
             'attr': attrs,
             'params': params,
