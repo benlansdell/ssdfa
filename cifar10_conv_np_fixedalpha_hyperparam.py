@@ -46,7 +46,7 @@ def set_random_hyperparameters(args, attrs, ranges, log_scale):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--alpha', type=float, default=1e-4)
     parser.add_argument('--beta', type=float, default=1e-4)  #feedback weights, B, learning rate
