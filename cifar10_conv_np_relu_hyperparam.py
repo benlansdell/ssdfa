@@ -59,6 +59,7 @@ def main():
     parser.add_argument('--bias', type=float, default=0.1)
     parser.add_argument('--gpu', type=int, default=1)
     parser.add_argument('--dfa', type=int, default=1)
+    parser.add_argument('--feedbacklearning', type=int, default=1)  #Whether or not to learn feedback weights
     parser.add_argument('--sparse', type=int, default=0)
     parser.add_argument('--rank', type=int, default=0)
     parser.add_argument('--init', type=str, default="sqrt_fan_in")
@@ -77,6 +78,9 @@ def main():
     
     ##############################################
     
+    if args.feedbacklearning == 0:
+        args.beta = 0
+
     EPOCHS = args.epochs
     TRAIN_EXAMPLES = 50000
     TEST_EXAMPLES = 10000
@@ -307,7 +311,7 @@ def main():
             f.close()
             
         #Save params after each run
-        fn = "./cifar10_conv_np_relu_hyperparam_septsearch_dfa_%d.npz"%args.dfa
+        fn = "./cifar10_conv_np_relu_hyperparam_search_varalpha_septsearch_dfa_%d_fblearning_%d.npz"%(args.dfa,args.feedbacklearning)
         to_save = {
             'attr': attrs,
             'params': params,
