@@ -18,10 +18,10 @@ import sys
 # 'dfa':1, 'sparse':0, 'rank':0, 'init':'zero', 'opt':['adam'], 'load':None}
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--batch_size', type=int, default=128)
-parser.add_argument('--alpha', type=float, default=1e-4)
-parser.add_argument('--beta', type=float, default=1e-4)  #feedback weights, B, learning rate
+parser.add_argument('--alpha', type=float, default=4.78e-6)
+parser.add_argument('--beta', type=float, default=0.0)  #feedback weights, B, learning rate
 parser.add_argument('--sigma', type=float, default=0.1)  #node pert standard deviation
 parser.add_argument('--l2', type=float, default=0.)
 parser.add_argument('--decay', type=float, default=1.)
@@ -35,8 +35,8 @@ parser.add_argument('--sparse', type=int, default=0)
 parser.add_argument('--rank', type=int, default=0)
 parser.add_argument('--init', type=str, default="sqrt_fan_in")
 parser.add_argument('--opt', type=str, default="adam")
-parser.add_argument('--save', type=int, default=0)
-parser.add_argument('--name', type=str, default="cifar10_conv_np")
+parser.add_argument('--save', type=int, default=1)
+parser.add_argument('--name', type=str, default="cifar10_conv_np_septsearch_dfaonly")
 parser.add_argument('--load', type=str, default=None)
 args = parser.parse_args()
 
