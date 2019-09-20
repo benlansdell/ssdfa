@@ -18,9 +18,9 @@ class FeedbackConv(Layer):
         self.sparse = sparse
         self.rank = rank
         self.name = name
-        
+        self.output_size = self.num_output
         b = FeedbackMatrix(size=(self.num_classes, self.num_output), sparse=self.sparse, rank=self.rank)
-        self.B = tf.cast(tf.Variable(b), tf.float32) 
+        self.B = tf.Variable(b, dtype = tf.float32) 
 
     ###################################################################
     

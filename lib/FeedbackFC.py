@@ -21,7 +21,8 @@ class FeedbackFC(Layer):
         self.name = name
 
         b = FeedbackMatrix(size=(self.num_classes, self.output_size), sparse=self.sparse, rank=self.rank)
-        self.B = tf.cast(tf.Variable(b), tf.float32) 
+        #self.B = tf.cast(tf.Variable(b), tf.float32) 
+        self.B = tf.Variable(b, dtype= tf.float32) 
 
     def get_weights(self):
         return [(self.name, self.B)]
