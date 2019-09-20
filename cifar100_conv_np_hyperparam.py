@@ -7,6 +7,8 @@ import tensorflow as tf
 import keras
 import numpy as np
 
+import numpy.random as rng
+
 from lib.Model import Model
 
 from lib.Layer import Layer 
@@ -29,7 +31,7 @@ def set_random_hyperparameters(args, attrs, ranges, log_scale):
         if log_scale[idx]:
             val = np.power(10, val)
         setattr(args, attrs[idx], val)
-        params.append(val)
+        params.append(val.astype(np.float32))
     return params
 
 ##############################################
@@ -52,7 +54,8 @@ def main():
     parser.add_argument('--rank', type=int, default=0)
     parser.add_argument('--feedbacklearning', type=int, default=1)  #Whether or not to learn feedback weights
     parser.add_argument('--init', type=str, default="glorot_uniform")
-    parser.add_argument('--save', type=int, default=0)
+    parser.add_argument('--N', type=int, default=50)
+    parser.add_argument('--save', type=int, default=1)
     parser.add_argument('--name', type=str, default="cifar100_conv")
     parser.add_argument('--load', type=str, default=None)
     args = parser.parse_args()
@@ -232,11 +235,11 @@ def main():
         
             #############################
             
-            if args.opt == 'decay' or args.opt == 'gd':
-                decay = np.power(args.decay, ii)
-                lr = args.alpha * decay
-            else:
-                lr = args.alpha
+            #if args.opt == 'decay' or args.opt == 'gd':
+            #    decay = np.power(args.decay, ii)
+            #    lr = args.alpha * decay
+            #else:
+            #lr = args.alpha
 
             _total_correct = 0
             for jj in range(0, train_examples, args.batch_size):
