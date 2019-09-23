@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 import numpy as np
 import math
@@ -33,7 +32,9 @@ class NodePert(Layer):
         return 0
         
     def forward(self, X):
-        return X + self.xi
+        A = X + self.xi
+        #return X + self.xi
+        return {'aout':A, 'cache':{}}
                 
     ###################################################################           
         
@@ -81,9 +82,3 @@ class NodePert(Layer):
         
     def lel(self, AI, AO, E, DO, Y): 
         return []
-        
-    ###################################################################
-        
-        
-
-

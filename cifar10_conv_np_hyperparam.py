@@ -78,7 +78,6 @@ def main():
     
     ##############################################
     
-
     EPOCHS = args.epochs
     TRAIN_EXAMPLES = 50000
     TEST_EXAMPLES = 10000
@@ -246,6 +245,8 @@ def main():
         f.close()
         
         ##############################################
+        train_accs = []
+        test_accs = []
         
         for ii in range(EPOCHS):
             if args.opt == 'decay' or args.opt == 'gd':

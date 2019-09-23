@@ -33,6 +33,7 @@ parser.add_argument('--gpu', type=int, default=1)
 parser.add_argument('--dfa', type=int, default=1)
 parser.add_argument('--sparse', type=int, default=0)
 parser.add_argument('--rank', type=int, default=0)
+parser.add_argument('--feedbacklearning', type=int, default=1)  #Whether or not to learn feedback weights
 parser.add_argument('--init', type=str, default="sqrt_fan_in")
 parser.add_argument('--opt', type=str, default="adam")
 parser.add_argument('--save', type=int, default=1)
