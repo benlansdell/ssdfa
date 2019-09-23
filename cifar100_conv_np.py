@@ -19,9 +19,10 @@ parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--dfa', type=int, default=0)
 parser.add_argument('--sparse', type=int, default=0)
 parser.add_argument('--rank', type=int, default=0)
+parser.add_argument('--feedbacklearning', type=int, default=1)  #Whether or not to learn feedback weights
 parser.add_argument('--init', type=str, default="glorot_uniform")
 parser.add_argument('--save', type=int, default=0)
-parser.add_argument('--name', type=str, default="cifar100_conv")
+parser.add_argument('--name', type=str, default="cifar100_conv_np")
 parser.add_argument('--load', type=str, default=None)
 args = parser.parse_args()
 
@@ -71,6 +72,9 @@ elif args.act == 'relu':
     act = Relu()
 else:
     assert(False)
+
+if args.feedbacklearning == 0:
+    args.beta = 0
 
 ##############################################
 

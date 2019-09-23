@@ -9,6 +9,8 @@ import numpy as np
 
 import numpy.random as rng
 
+import pickle 
+
 from lib.Model import Model
 
 from lib.Layer import Layer 
@@ -56,7 +58,7 @@ def main():
     parser.add_argument('--init', type=str, default="glorot_uniform")
     parser.add_argument('--N', type=int, default=50)
     parser.add_argument('--save', type=int, default=1)
-    parser.add_argument('--name', type=str, default="cifar100_conv")
+    parser.add_argument('--name', type=str, default="cifar100_conv_np")
     parser.add_argument('--load', type=str, default=None)
     args = parser.parse_args()
     
@@ -296,7 +298,7 @@ def main():
         ##############################################
     
             #Save params after each run
-            fn = "./cifar100_conv_np_hyperparam_search_varalpha_dfa_%d_fblearning_%d.npz"%(args.dfa,args.feedbacklearning)
+            fn = "./%s_hyperparam_search_varalpha_dfa_%d_fblearning_%d.npz"%(args.name, args.dfa,args.feedbacklearning)
             to_save = {
                 'attr': attrs,
                 'params': params,
