@@ -78,8 +78,6 @@ def main():
     
     ##############################################
     
-    if args.feedbacklearning == 0:
-        args.beta = 0
 
     EPOCHS = args.epochs
     TRAIN_EXAMPLES = 50000
@@ -117,6 +115,9 @@ def main():
         #Choose some random parameters...
         param = set_random_hyperparameters(args, attrs, ranges, log_scale)
         params.append(param)
+
+        if args.feedbacklearning == 0:
+            args.beta = 0
 
         #Tell me the params....
         print('Alpha, beta, sigma are: ', args.alpha, args.beta, args.sigma)
@@ -310,7 +311,7 @@ def main():
             f.close()
             
         #Save params after each run
-        fn = "./cifar10_conv_np_hyperparam_search_varalpha_septsearch_dfa_%d_fblearning_%d.npz"%(args.dfa,args.feedbacklearning)
+        fn = "./cifar10_conv_np_hyperparam_search_varalpha_septsearch_2_dfa_%d_fblearning_%d.npz"%(args.dfa,args.feedbacklearning)
         to_save = {
             'attr': attrs,
             'params': params,
