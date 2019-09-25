@@ -1,4 +1,5 @@
 *__pycache__
+*.npz
 *.results
 *.npy
 nohup.out
