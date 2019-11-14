@@ -9,7 +9,7 @@ from lib.Layer import Layer
 
 class NodePert(Layer):
 
-    def __init__(self, size : tuple, sigma = 0., name=None):
+    def __init__(self, size : tuple, sigma = 0., name=None, batch_size = 128):
         self.size = size
         #self.batch_size, self.h, self.w, self.f = self.size
         self.name = name
@@ -17,6 +17,7 @@ class NodePert(Layer):
         self.num_output = np.prod(self.size[1:])
         #Add noise!
         self.xi = tf.random.normal(shape=self.size, mean=0.0, stddev=self.sigma, dtype=tf.float32)
+        self.hook = tf.Variable(tf.zeros([batch_size]+size[1:]))
 
     ###################################################################
     
@@ -29,11 +30,14 @@ class NodePert(Layer):
     def get_noise(self):
         return self.xi
 
+    def get_hook(self):
+        return self.hook
+
     def num_params(self):
         return 0
         
     def forward(self, X):
-        return X + self.xi
+        return X + self.xi + self.hook
                 
     ###################################################################           
         

@@ -33,10 +33,11 @@ parser.add_argument('--gpu', type=int, default=1)
 parser.add_argument('--dfa', type=int, default=1)
 parser.add_argument('--sparse', type=int, default=0)
 parser.add_argument('--rank', type=int, default=0)
+parser.add_argument('--feedbacklearning', type=int, default=0)  #Whether or not to learn feedback weights
 parser.add_argument('--init', type=str, default="sqrt_fan_in")
 parser.add_argument('--opt', type=str, default="adam")
 parser.add_argument('--save', type=int, default=1)
-parser.add_argument('--name', type=str, default="cifar10_conv_np_septsearch_dfaonly")
+parser.add_argument('--name', type=str, default="cifar10_conv_noise")
 parser.add_argument('--load', type=str, default=None)
 args = parser.parse_args()
 
@@ -146,13 +147,11 @@ l16 = FullyConnected(size=[2048, 10], num_classes=10, init_weights=args.init, al
 
 ##############################################
 
-model = Model(layers=[l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16])
-model_perturbed = Model(layers=[l0, l1, l2p, l2, l3, l4, l5p, l5, l6, l7, l8p, l8, l9, l10p, l10, l11, l12, l13p, l13, l14, l15, l16])
+model = Model(layers=[l0, l1, l2p, l2, l3, l4, l5p, l5, l6, l7, l8p, l8, l9, l10p, l10, l11, l12, l13p, l13, l14, l15, l16])
 
 predict = model.predict(X=X)
-predict_perturbed = model_perturbed.predict(X=X)
 
-#######
+####### Node pert!
 #Pairs of perturbations and feedback weights
 #feedbackpairs = [[l2p, l2], [l5p, l5], [l8p, l8], [l10p, l12], [l13p, l15]]
 
@@ -161,19 +160,8 @@ feedbackpairs = [[l2p, l2], [l5p, l5], [l8p, l8], [l13p, l15]]
 
 #Get noise, feedback matrices, and loss function and unperturbed loss function, to make update rule for feedback weights
 loss = tf.reduce_sum(tf.pow(tf.nn.softmax(predict) - Y, 2), 1)/2
-loss_perturbed = tf.reduce_sum(tf.pow(tf.nn.softmax(predict_perturbed) - Y, 2), 1)/2
 
 train_B = []
-E = tf.nn.softmax(predict) - Y
-for idx, (noise, feedback) in enumerate(feedbackpairs):
-    print(idx, batch_size, feedback.output_size)
-    xi = tf.reshape(noise.get_noise(), (batch_size, feedback.output_size))
-    B = feedback.B
-    lambd = tf.matmul(tf.diag(loss_perturbed - loss)/args.sigma/args.sigma, xi)
-    np_error = tf.matmul(E, B) - lambd
-    grad_B = tf.matmul(tf.transpose(E), np_error)
-    new_B = B.assign(B - args.beta*grad_B)
-    train_B.append(new_B)
 #######
 
 weights = model.get_weights()
@@ -195,9 +183,9 @@ if args.opt == "adam" or args.opt == "rms" or args.opt == "decay":
 
 else:
     if args.dfa:
-        train = model.dfa(X=X, Y=Y)
+        train = model_perturbed.dfa(X=X, Y=Y)
     else:
-        train = model.train(X=X, Y=Y)
+        train = model_perturbed.train(X=X, Y=Y)
 
 correct = tf.equal(tf.argmax(predict,1), tf.argmax(Y,1))
 total_correct = tf.reduce_sum(tf.cast(correct, tf.float32))
@@ -251,9 +239,6 @@ for ii in range(EPOCHS):
         ys = y_train[jj*BATCH_SIZE:(jj+1)*BATCH_SIZE]
         _correct, _ = sess.run([total_correct, train], feed_dict={sigma: 0.0, batch_size: BATCH_SIZE, dropout_rate: args.dropout, learning_rate: lr, X: xs, Y: ys})
         
-        #Add step to update B......
-        _ = sess.run([train_B], feed_dict={sigma: args.sigma, batch_size: BATCH_SIZE, dropout_rate: args.dropout, learning_rate: lr, X: xs, Y: ys})
-
         _total_correct += _correct
         _count += BATCH_SIZE
 

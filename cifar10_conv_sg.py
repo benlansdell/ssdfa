@@ -33,10 +33,11 @@ parser.add_argument('--gpu', type=int, default=1)
 parser.add_argument('--dfa', type=int, default=1)
 parser.add_argument('--sparse', type=int, default=0)
 parser.add_argument('--rank', type=int, default=0)
+parser.add_argument('--feedbacklearning', type=int, default=1)  #Whether or not to learn feedback weights
 parser.add_argument('--init', type=str, default="sqrt_fan_in")
 parser.add_argument('--opt', type=str, default="adam")
 parser.add_argument('--save', type=int, default=1)
-parser.add_argument('--name', type=str, default="cifar10_conv_np_septsearch_dfaonly")
+parser.add_argument('--name', type=str, default="cifar10_conv_sg")
 parser.add_argument('--load', type=str, default=None)
 args = parser.parse_args()
 
@@ -117,27 +118,27 @@ l0 = Convolution(input_sizes=[batch_size, 32, 32, 3], filter_sizes=[5, 5, 3, 96]
 l1 = MaxPool(size=[batch_size, 32, 32, 96], ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="SAME")
 
 #Add perturbation to activity to get output to train feedback weights with
-l2p = NodePert(size=[batch_size, 16, 16, 96], sigma = sigma)
+l2p0 = NodePert(size=[batch_size, 16, 16, 96], sigma = 0., batch_size = BATCH_SIZE)
 l2 = FeedbackConv(size=[batch_size, 16, 16, 96], num_classes=10, sparse=args.sparse, rank=args.rank, name='conv1_fb')
 
 l3 = Convolution(input_sizes=[batch_size, 16, 16, 96], filter_sizes=[5, 5, 96, 128], num_classes=10, init_filters=args.init, strides=[1, 1, 1, 1], padding="SAME", alpha=learning_rate, activation=act, bias=args.bias, last_layer=False, name='conv2', load=weights_conv, train=train_conv)
 l4 = MaxPool(size=[batch_size, 16, 16, 128], ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="SAME")
-l5p = NodePert(size=[batch_size, 8, 8, 128], sigma = sigma)
+l5p0 = NodePert(size=[batch_size, 8, 8, 128], sigma = 0., batch_size = BATCH_SIZE)
 l5 = FeedbackConv(size=[batch_size, 8, 8, 128], num_classes=10, sparse=args.sparse, rank=args.rank, name='conv2_fb')
 
 l6 = Convolution(input_sizes=[batch_size, 8, 8, 128], filter_sizes=[5, 5, 128, 256], num_classes=10, init_filters=args.init, strides=[1, 1, 1, 1], padding="SAME", alpha=learning_rate, activation=act, bias=args.bias, last_layer=False, name='conv3', load=weights_conv, train=train_conv)
 l7 = MaxPool(size=[batch_size, 8, 8, 256], ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="SAME")
-l8p = NodePert(size=[batch_size, 4, 4, 256], sigma = sigma)
+l8p0 = NodePert(size=[batch_size, 4, 4, 256], sigma = 0., batch_size = BATCH_SIZE)
 l8 = FeedbackConv(size=[batch_size, 4, 4, 256], num_classes=10, sparse=args.sparse, rank=args.rank, name='conv3_fb')
 
 l9 = ConvToFullyConnected(shape=[4, 4, 256])
 
-l10p = NodePert(size=[batch_size, 4*4*256], sigma = sigma)
+l10p0 = NodePert(size=[batch_size, 4*4*256], sigma = 0., batch_size = BATCH_SIZE)
 l10 = FullyConnected(size=[4*4*256, 2048], num_classes=10, init_weights=args.init, alpha=learning_rate, activation=act, bias=args.bias, last_layer=False, name='fc1', load=weights_fc, train=train_fc)
 l11 = Dropout(rate=dropout_rate)
 l12 = FeedbackFC(size=[4*4*256, 2048], num_classes=10, sparse=args.sparse, rank=args.rank, name='fc1_fb')
 
-l13p = NodePert(size=[batch_size, 2048], sigma = sigma)
+l13p0 = NodePert(size=[batch_size, 2048], sigma = 0., batch_size = BATCH_SIZE)
 l13 = FullyConnected(size=[2048, 2048], num_classes=10, init_weights=args.init, alpha=learning_rate, activation=act, bias=args.bias, last_layer=False, name='fc2', load=weights_fc, train=train_fc)
 l14 = Dropout(rate=dropout_rate)
 l15 = FeedbackFC(size=[2048, 2048], num_classes=10, sparse=args.sparse, rank=args.rank, name='fc2_fb')
@@ -147,34 +148,11 @@ l16 = FullyConnected(size=[2048, 10], num_classes=10, init_weights=args.init, al
 ##############################################
 
 model = Model(layers=[l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16])
-model_perturbed = Model(layers=[l0, l1, l2p, l2, l3, l4, l5p, l5, l6, l7, l8p, l8, l9, l10p, l10, l11, l12, l13p, l13, l14, l15, l16])
+
+model_normal = Model(layers = [l0, l1, l2p0, l3, l4, l5p0, l6, l7, l8p0, l9, l10p0, l10, l11, l13p0, l13, l14, l16])
 
 predict = model.predict(X=X)
-predict_perturbed = model_perturbed.predict(X=X)
-
-#######
-#Pairs of perturbations and feedback weights
-#feedbackpairs = [[l2p, l2], [l5p, l5], [l8p, l8], [l10p, l12], [l13p, l15]]
-
-#Test one at a time... this works, so it must be l10p, 12 pair that fails
-feedbackpairs = [[l2p, l2], [l5p, l5], [l8p, l8], [l13p, l15]]
-
-#Get noise, feedback matrices, and loss function and unperturbed loss function, to make update rule for feedback weights
-loss = tf.reduce_sum(tf.pow(tf.nn.softmax(predict) - Y, 2), 1)/2
-loss_perturbed = tf.reduce_sum(tf.pow(tf.nn.softmax(predict_perturbed) - Y, 2), 1)/2
-
-train_B = []
-E = tf.nn.softmax(predict) - Y
-for idx, (noise, feedback) in enumerate(feedbackpairs):
-    print(idx, batch_size, feedback.output_size)
-    xi = tf.reshape(noise.get_noise(), (batch_size, feedback.output_size))
-    B = feedback.B
-    lambd = tf.matmul(tf.diag(loss_perturbed - loss)/args.sigma/args.sigma, xi)
-    np_error = tf.matmul(E, B) - lambd
-    grad_B = tf.matmul(tf.transpose(E), np_error)
-    new_B = B.assign(B - args.beta*grad_B)
-    train_B.append(new_B)
-#######
+predict_normal = model_normal.predict(X=X)
 
 weights = model.get_weights()
 
@@ -182,8 +160,8 @@ if args.opt == "adam" or args.opt == "rms" or args.opt == "decay":
     if args.dfa:
         grads_and_vars = model.dfa_gvs(X=X, Y=Y)
     else:
-        grads_and_vars = model.gvs(X=X, Y=Y)
-        
+        grads_and_vars = model.gvs(X=X, Y=Y
+)        
     if args.opt == "adam":
         train = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9, beta2=0.999, epsilon=args.eps).apply_gradients(grads_and_vars=grads_and_vars)
     elif args.opt == "rms":
@@ -195,13 +173,32 @@ if args.opt == "adam" or args.opt == "rms" or args.opt == "decay":
 
 else:
     if args.dfa:
-        train = model.dfa(X=X, Y=Y)
+        train = model_perturbed.dfa(X=X, Y=Y)
     else:
-        train = model.train(X=X, Y=Y)
+        train = model_perturbed.train(X=X, Y=Y)
 
 correct = tf.equal(tf.argmax(predict,1), tf.argmax(Y,1))
 total_correct = tf.reduce_sum(tf.cast(correct, tf.float32))
 
+####### Node pert!
+#Pairs of perturbations and feedback weights
+feedbacktriples = [[l2, l2p0], [l5, l5p0], [l8, l8p0], [l12,l10p0], [l15, l13p0]]
+
+#Get noise, feedback matrices, and loss function and unperturbed loss function, to make update rule for feedback weights
+loss_normal = tf.reduce_sum(tf.pow(tf.nn.softmax(predict_normal) - Y, 2), 1)/2
+
+train_B = []
+E = tf.nn.softmax(predict) - Y
+for idx, (feedback, noise0) in enumerate(feedbacktriples):
+    print(idx, batch_size, feedback.output_size)
+    xi = noise0.get_hook()
+    B = feedback.B
+    lambd = tf.gradients(xs=xi, ys=loss_normal)[0]
+    print(lambd)
+    np_error = tf.matmul(E, B) - tf.reshape(lambd, (batch_size, feedback.output_size))
+    grad_B = tf.matmul(tf.transpose(E), np_error)
+    new_B = B.assign(B - args.beta*grad_B)
+    train_B.append(new_B)
 
 ##############################################
 
@@ -252,7 +249,7 @@ for ii in range(EPOCHS):
         _correct, _ = sess.run([total_correct, train], feed_dict={sigma: 0.0, batch_size: BATCH_SIZE, dropout_rate: args.dropout, learning_rate: lr, X: xs, Y: ys})
         
         #Add step to update B......
-        _ = sess.run([train_B], feed_dict={sigma: args.sigma, batch_size: BATCH_SIZE, dropout_rate: args.dropout, learning_rate: lr, X: xs, Y: ys})
+        #_ = sess.run([train_B], feed_dict={sigma: args.sigma, batch_size: BATCH_SIZE, dropout_rate: args.dropout, learning_rate: lr, X: xs, Y: ys})
 
         _total_correct += _correct
         _count += BATCH_SIZE
